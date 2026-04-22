@@ -159,13 +159,22 @@ export function TeacherDashboard({ user, language, onLogout }: TeacherDashboardP
                 <Bell className="h-4 w-4 md:h-5 md:w-5" />
               </Button>
               
-              <div className="hidden md:block text-right">
-                <p className="text-sm font-medium text-card-foreground">
-                  {user.name}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {user.school}
-                </p>
+              <div className="hidden md:flex items-center gap-3">
+                {user.photoURL ? (
+                  <img src={user.photoURL} alt="" className="h-8 w-8 rounded-full border border-border" referrerPolicy="no-referrer" />
+                ) : (
+                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-sm font-bold">
+                    {(user.name || '?')[0]}
+                  </div>
+                )}
+                <div className="text-right">
+                  <p className="text-sm font-medium text-card-foreground">
+                    {user.name}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {user.email || user.school}
+                  </p>
+                </div>
               </div>
               
               <Button

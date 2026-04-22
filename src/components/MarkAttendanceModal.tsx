@@ -1,14 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
-import { Checkbox } from './ui/checkbox';
 import { Input } from './ui/input';
 import { toast } from 'sonner';
 import { Search, Users, UserCheck, UserX, Clock, QrCode, ClipboardList } from 'lucide-react';
 import QRCode from 'react-qr-code';
-import { useEffect } from 'react';
 
 interface MarkAttendanceModalProps {
   isOpen: boolean;
@@ -76,6 +74,14 @@ export function MarkAttendanceModal({ isOpen, onClose, language }: MarkAttendanc
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedClass, setSelectedClass] = useState('5-A');
   const [activeTab, setActiveTab] = useState<'manual' | 'qr'>('manual');
+
+  // Stable session token so QR doesn't flicker on re-renders
+  const sessionToken = useMemo(() => Math.random().toString(36).substring(7), []);
+  const qrValue = useMemo(() => JSON.stringify({
+    classId: selectedClass,
+    date: new Date().toISOString().split('T')[0],
+    sessionToken
+  }), [selectedClass, sessionToken]);
 
   const filteredStudents = students.filter(student =>
     student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -261,11 +267,7 @@ export function MarkAttendanceModal({ isOpen, onClose, language }: MarkAttendanc
             <div className="flex flex-col items-center justify-center py-8">
               <div className="bg-white p-6 rounded-xl shadow-sm border border-border flex justify-center items-center" style={{ width: '250px', height: '250px', margin: '0 auto' }}>
                 <QRCode 
-                  value={JSON.stringify({
-                    classId: selectedClass,
-                    date: new Date().toISOString().split('T')[0],
-                    sessionToken: Math.random().toString(36).substring(7)
-                  })} 
+                  value={qrValue} 
                   size={200}
                   style={{ height: "auto", maxWidth: "100%", width: "100%" }}
                   viewBox={`0 0 200 200`}
