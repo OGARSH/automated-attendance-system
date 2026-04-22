@@ -113,7 +113,7 @@ export function MarkAttendanceModal({ isOpen, onClose, language }: MarkAttendanc
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
             <UserCheck className="h-6 w-6 text-primary" />
@@ -259,14 +259,16 @@ export function MarkAttendanceModal({ isOpen, onClose, language }: MarkAttendanc
             </>
           ) : (
             <div className="flex flex-col items-center justify-center py-8">
-              <div className="bg-white p-6 rounded-xl shadow-sm border border-border">
+              <div className="bg-white p-6 rounded-xl shadow-sm border border-border flex justify-center items-center" style={{ width: '250px', height: '250px', margin: '0 auto' }}>
                 <QRCode 
                   value={JSON.stringify({
                     classId: selectedClass,
                     date: new Date().toISOString().split('T')[0],
                     sessionToken: Math.random().toString(36).substring(7)
                   })} 
-                  size={200} 
+                  size={200}
+                  style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+                  viewBox={`0 0 200 200`}
                 />
               </div>
               <p className="mt-6 text-sm text-muted-foreground text-center max-w-sm">
