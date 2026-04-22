@@ -17,7 +17,7 @@ import {
   QrCode,
   Scan
 } from 'lucide-react';
-import { Html5QrcodeScanner } from 'html5-qrcode';
+import { Html5Qrcode } from 'html5-qrcode';
 import { toast } from 'sonner';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
@@ -97,36 +97,56 @@ export function StudentDashboard({ user, language, onLogout }: StudentDashboardP
   const t = translations[language];
 
   useEffect(() => {
-    let scanner: Html5QrcodeScanner | null = null;
+    let html5QrCode: Html5Qrcode;
+    let isComponentMounted = true;
+    
     if (isScannerOpen) {
       setTimeout(() => {
+        if (!isComponentMounted) return;
+        
         const element = document.getElementById('student-qr-reader');
         if (element) {
-          scanner = new Html5QrcodeScanner(
-            "student-qr-reader",
-            { fps: 10, qrbox: { width: 250, height: 250 } },
-            false
-          );
+          html5QrCode = new Html5Qrcode("student-qr-reader");
           
-          scanner.render((decodedText) => {
-            try {
-              const data = JSON.parse(decodedText);
-              if (data && data.classId) {
-                // Here we would normally make an API call to mark attendance
-                toast.success(language === 'en' ? 'Attendance marked successfully!' : 'उपस्थिति सफलतापूर्वक दर्ज की गई!');
-                setIsScannerOpen(false);
+          html5QrCode.start(
+            { facingMode: "environment" }, 
+            {
+              fps: 10,
+              qrbox: { width: 250, height: 250 },
+              aspectRatio: 1.0
+            },
+            (decodedText) => {
+              try {
+                const data = JSON.parse(decodedText);
+                if (data && data.classId) {
+                  // Here we would normally make an API call to mark attendance
+                  toast.success(language === 'en' ? 'Attendance marked successfully!' : 'उपस्थिति सफलतापूर्वक दर्ज की गई!');
+                  setIsScannerOpen(false);
+                }
+              } catch (e) {
+                // Not a valid JSON QR code, ignore
               }
-            } catch (e) {
-              console.error("Invalid QR Code", e);
-            }
-          }, undefined);
+            },
+            undefined
+          ).catch((err) => {
+            console.error("Camera error:", err);
+            toast.error(language === 'en' ? 'Could not access camera. Please check permissions.' : 'कैमरा एक्सेस नहीं हो सका। कृपया अनुमतियां जांचें।');
+            setIsScannerOpen(false);
+          });
         }
       }, 100);
     }
 
     return () => {
-      if (scanner) {
-        scanner.clear().catch(console.error);
+      isComponentMounted = false;
+      if (html5QrCode) {
+        try {
+          html5QrCode.stop().then(() => {
+            html5QrCode.clear();
+          }).catch(console.error);
+        } catch (e) {
+          console.error(e);
+        }
       }
     };
   }, [isScannerOpen, language]);
@@ -418,13 +438,21 @@ export function StudentDashboard({ user, language, onLogout }: StudentDashboardP
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center space-y-4">
-                  <div id="student-qr-reader" className="w-full max-w-sm rounded-lg overflow-hidden border border-border bg-card"></div>
+                  <div className="relative w-full max-w-sm rounded-2xl overflow-hidden border-2 border-primary/20 bg-black shadow-inner">
+                    <div id="student-qr-reader" className="w-full min-h-[300px]"></div>
+                    {/* Scanning overlay effect */}
+                    <div className="absolute inset-0 pointer-events-none border-[4px] border-primary/30 rounded-2xl z-10"></div>
+                  </div>
+                  <div className="flex items-center text-primary font-medium animate-pulse">
+                    <Scan className="h-4 w-4 mr-2" />
+                    {language === 'en' ? 'Scanning for QR Code...' : 'क्यूआर कोड स्कैन किया जा रहा है...'}
+                  </div>
                   <Button 
                     variant="outline"
                     onClick={() => setIsScannerOpen(false)}
-                    className="w-full"
+                    className="w-full border-destructive/30 text-destructive hover:bg-destructive/10"
                   >
-                    {language === 'en' ? 'Cancel' : 'रद्द करें'}
+                    {language === 'en' ? 'Cancel Scanning' : 'स्कैनिंग रद्द करें'}
                   </Button>
                 </div>
               )}
